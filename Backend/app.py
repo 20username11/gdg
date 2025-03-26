@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 import requests
+import google.generativeai as genai
 import geopy.distance  # Library to calculate distances
 import json  # For debugging API responses
 
@@ -7,6 +8,9 @@ app = Flask(__name__)
 
 # 🔹 Replace with your actual Google Maps API Key
 GOOGLE_MAPS_API_KEY = "AIzaSyAohWXg1BFJZYRt2i1FNimNv881qoSx4dM"
+GEMINI_API_KEY = "AIzaSyAohWXg1BFJZYRt2i1FNimNv881qoSx4dM"
+genai.configure(api_key=GEMINI_API_KEY)
+
 
 @app.route("/")
 def home():
@@ -158,6 +162,50 @@ def check_safety():
         "street_lighting": lighting_status,
         "safety_score": f"{safety_score}/100"
     })
+@app.route("/chatbot", methods=["POST"])
+def chatbot():
+    """ Process user safety queries, extract location details, fetch data, and respond naturally using Gemini AI. """
+    data = request.json
+    user_query = data.get("query", "").strip()
+
+    if not user_query:
+        return jsonify({"error": "Please provide a valid query"}), 400
+
+    try:
+        # Step 1: Use Gemini AI to infer the location from the query
+        model = genai.GenerativeModel("gemini-1.5-pro")
+        infer_response = model.generate_content(
+            f"Extract only the location name (if present) from this question: {user_query}. If no location is mentioned, respond with 'None'."
+        )
+        location_name = infer_response.text.strip()
+
+        if location_name.lower() == "none":
+            return jsonify({"error": "Please specify a location in your query."}), 400
+
+        # Step 2: Convert location name to coordinates
+        location = geocode_location(location_name)
+        if not location:
+            return jsonify({"error": "Could not find the location. Try again."}), 404
+
+        lat, lng = location
+
+        # Step 3: Fetch safety-related data
+        safety_info = get_safety_info(lat, lng)
+        distance = get_distance_from_main_road(lat, lng)
+
+        # Step 4: Generate a natural language response using Gemini AI
+        safety_details = f"Location: {location_name}\n"
+        safety_details += f"Distance from main road: {distance} meters\n"
+        safety_details += "Nearby emergency locations:\n" + "\n".join(safety_info)
+
+        final_response = model.generate_content(
+            f"Based on this safety data, answer the user's question naturally:\n{user_query}\n\n{safety_details}"
+        )
+
+        return jsonify({"response": final_response.text})
+
+    except Exception as e:
+        return jsonify({"error": "Failed to process the query", "details": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
