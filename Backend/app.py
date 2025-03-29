@@ -2,10 +2,13 @@ from flask import Flask, request, jsonify
 import requests
 import google.generativeai as genai
 import geopy.distance  # Library to calculate distances
+from flask_cors import CORS
 import json  # For debugging API responses
 
 app = Flask(__name__)
 
+CORS(app)
+CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 # 🔹 Replace with your actual Google Maps API Key
 GOOGLE_MAPS_API_KEY = "AIzaSyAohWXg1BFJZYRt2i1FNimNv881qoSx4dM"
 GEMINI_API_KEY = "AIzaSyAohWXg1BFJZYRt2i1FNimNv881qoSx4dM"
