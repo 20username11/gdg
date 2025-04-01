@@ -7,6 +7,7 @@ import {
   InfoWindow,
   Circle,
 } from "@react-google-maps/api";
+import Loader from "../common/Loader";
 
 const containerStyle = {
   width: "100%",
@@ -80,70 +81,89 @@ const MapComponent = () => {
           />
         </Autocomplete>
       </div>
-      <GoogleMap mapContainerStyle={containerStyle} center={mapCenter} zoom={12}>
-        {/* Marker for the searched location */}
-        <Marker position={mapCenter} />
-
-        {/* Conditionally render the Circle around the searched location */}
-        {safetyData?.safety_score && (
-          <Circle
-            center={mapCenter}
-            radius={3000} // 3km radius
-            options={{
-              strokeColor: getCircleColor(),
-              strokeOpacity: 0.8,
-              strokeWeight: 2,
-              fillColor: getCircleColor(),
-              fillOpacity: 0.2,
-            }}
-          />
-        )}
-
-        {/* Markers for nearby emergency locations */}
-        {safetyData?.safety_info?.map((info, index) => {
-          const [type, name, vicinity] = info.split(" - ");
-          const latLng = { lat: mapCenter.lat + 0.01 * index, lng: mapCenter.lng + 0.01 * index }; // Mock lat/lng for demo
-          return (
-            <Marker
-              key={index}
-              position={latLng}
-              onClick={() => setSelectedPlace({ type, name, vicinity })}
-            />
-          );
-        })}
-
-        {/* InfoWindow for selected place */}
-        {selectedPlace && (
-          <InfoWindow
-            position={mapCenter}
-            onCloseClick={() => setSelectedPlace(null)}
-          >
-            <div>
-              <h3>{selectedPlace.type}</h3>
-              <p>{selectedPlace.name}</p>
-              <p>{selectedPlace.vicinity}</p>
-            </div>
-          </InfoWindow>
-        )}
-      </GoogleMap>
-
-      {/* Loading indicator */}
-      {loading && (
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-4 rounded-lg shadow-lg">
-          <p>Loading...</p>
+      {loading ? (
+        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-white z-50">
+          <Loader />
         </div>
+      ) : (
+        <GoogleMap
+          mapContainerStyle={containerStyle}
+          center={mapCenter}
+          zoom={12}
+        >
+          {/* Marker for the searched location */}
+          <Marker position={mapCenter} />
+
+          {/* Conditionally render the Circle around the searched location */}
+          {safetyData?.safety_score && (
+            <Circle
+              center={mapCenter}
+              radius={3000} // 3km radius
+              options={{
+                strokeColor: getCircleColor(),
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillColor: getCircleColor(),
+                fillOpacity: 0.2,
+              }}
+            />
+          )}
+
+          {/* Markers for nearby emergency locations */}
+          {safetyData?.safety_info?.map((info, index) => {
+            const [type, name, vicinity] = info.split(" - ");
+            const latLng = {
+              lat: mapCenter.lat + 0.01 * index,
+              lng: mapCenter.lng + 0.01 * index,
+            }; // Mock lat/lng for demo
+            return (
+              <Marker
+                key={index}
+                position={latLng}
+                onClick={() => setSelectedPlace({ type, name, vicinity })}
+              />
+            );
+          })}
+
+          {/* InfoWindow for selected place */}
+          {selectedPlace && (
+            <InfoWindow
+              position={mapCenter}
+              onCloseClick={() => setSelectedPlace(null)}
+            >
+              <div>
+                <h3>{selectedPlace.type}</h3>
+                <p>{selectedPlace.name}</p>
+                <p>{selectedPlace.vicinity}</p>
+              </div>
+            </InfoWindow>
+          )}
+        </GoogleMap>
       )}
 
       {/* Sidebar for safety details */}
       {safetyData && (
         <div className="absolute top-20 left-4 bg-white p-4 rounded-lg shadow-lg w-[300px]">
           <h2 className="text-lg font-bold">Safety Details</h2>
-          <p><strong>Location:</strong> {safetyData.location}</p>
-          <p><strong>Distance from Main Road:</strong> {safetyData.distance_from_main_road}</p>
-          <p><strong>Crime Level:</strong> {safetyData.crime_level}</p>
-          <p><strong>CCTV Count:</strong> {safetyData.cctv_count}</p>
-          <p><strong>Street Lighting:</strong> {safetyData.street_lighting}</p>
-          <p><strong>Safety Score:</strong> {safetyData.safety_score}</p>
+          <p>
+            <strong>Location:</strong> {safetyData.location}
+          </p>
+          <p>
+            <strong>Distance from Main Road:</strong>{" "}
+            {safetyData.distance_from_main_road}
+          </p>
+          <p>
+            <strong>Crime Level:</strong> {safetyData.crime_level}
+          </p>
+          <p>
+            <strong>CCTV Count:</strong> {safetyData.cctv_count}
+          </p>
+          <p>
+            <strong>Street Lighting:</strong> {safetyData.street_lighting}
+          </p>
+          <p>
+            <strong>Safety Score:</strong> {safetyData.safety_score}
+          </p>
         </div>
       )}
     </LoadScript>
