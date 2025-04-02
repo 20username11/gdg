@@ -8,6 +8,7 @@ import {
   Circle,
 } from "@react-google-maps/api";
 import Loader from "../common/Loader";
+import hospitalMarker from "../../assets/icons/hospital.png";
 
 const containerStyle = {
   width: "100%",
@@ -61,14 +62,21 @@ const MapComponent = () => {
   // Function to determine circle color based on safety score
   const getCircleColor = () => {
     if (!safetyData || !safetyData.safety_score) return "#FF0000"; // Default to red if no data
-    const score = parseInt(safetyData.safety_score.split("/")[0]); // Extract numeric score
+
+    // Ensure safety_score is a string before splitting
+    const scoreString = String(safetyData.safety_score);
+    const score = parseInt(scoreString.split("/")[0]); // Extract numeric score
+
     if (score > 80) return "#00FF00"; // Green for score > 80
     if (score >= 60) return "#FFFF00"; // Yellow for score between 60 and 80
     return "#FF0000"; // Red for score < 60
   };
 
   return (
-    <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY} libraries={["places"]}>
+    <LoadScript
+      googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
+      libraries={["places"]}
+    >
       <div
         className="absolute w-[100vw] top-20 flex justify-center z-10 p-4"
         style={{ marginBottom: "10px" }}
@@ -81,6 +89,7 @@ const MapComponent = () => {
           />
         </Autocomplete>
       </div>
+      // Updated rendering for safety details
       {loading ? (
         <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-white z-50">
           <Loader />
@@ -110,17 +119,28 @@ const MapComponent = () => {
           )}
 
           {/* Markers for nearby emergency locations */}
-          {safetyData?.safety_info?.map((info, index) => {
-            const [type, name, vicinity] = info.split(" - ");
-            const latLng = {
-              lat: mapCenter.lat + 0.01 * index,
-              lng: mapCenter.lng + 0.01 * index,
-            }; // Mock lat/lng for demo
+          {/* Markers for nearby emergency locations */}
+          {safetyData?.safety_locations?.map((location, index) => {
+            // Determine the icon based on the location type
+            const icon =
+              location.type === "hospital"
+                ? hospitalMarker // Use your local hospital icon
+                : location.type === "police"
+                ? "https://maps.google.com/mapfiles/ms/icons/police.png" // Police station icon
+                : "https://maps.google.com/mapfiles/ms/icons/red-dot.png"; // Default icon
+
             return (
               <Marker
                 key={index}
-                position={latLng}
-                onClick={() => setSelectedPlace({ type, name, vicinity })}
+                position={{ lat: location.lat, lng: location.lng }}
+                icon={icon} // Use the custom icon
+                onClick={() =>
+                  setSelectedPlace({
+                    type: location.type,
+                    name: location.name,
+                    vicinity: location.vicinity,
+                  })
+                }
               />
             );
           })}
@@ -140,8 +160,7 @@ const MapComponent = () => {
           )}
         </GoogleMap>
       )}
-
-      {/* Sidebar for safety details */}
+      // Sidebar for safety details
       {safetyData && (
         <div className="absolute top-20 left-4 bg-white p-4 rounded-lg shadow-lg w-[300px]">
           <h2 className="text-lg font-bold">Safety Details</h2>
@@ -160,6 +179,9 @@ const MapComponent = () => {
           </p>
           <p>
             <strong>Street Lighting:</strong> {safetyData.street_lighting}
+          </p>
+          <p>
+            <strong>Summary:</strong> {safetyData.ai_response.replace(/```json\n|\n ```| "response"/g, "")}
           </p>
           <p>
             <strong>Safety Score:</strong> {safetyData.safety_score}
