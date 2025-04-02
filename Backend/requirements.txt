@@ -2,3 +2,5 @@ flask
 google-generativeai
 requests
 geopy
+flask-cors
+pandas

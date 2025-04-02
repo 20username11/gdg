@@ -4,6 +4,7 @@ import google.generativeai as genai
 import geopy.distance  # Library to calculate distances
 from flask_cors import CORS
 import json  # For debugging API responses
+import pandas as pd  # For handling CSV data
 
 app = Flask(__name__)
 
@@ -13,6 +14,8 @@ CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 GOOGLE_MAPS_API_KEY = "AIzaSyAohWXg1BFJZYRt2i1FNimNv881qoSx4dM"
 GEMINI_API_KEY = "AIzaSyAohWXg1BFJZYRt2i1FNimNv881qoSx4dM"
 genai.configure(api_key=GEMINI_API_KEY)
+# Load crime dataset
+crime_data = pd.read_csv("crime_data.csv")
 
 
 @app.route("/")
@@ -269,6 +272,67 @@ def chatbot():
 
     except Exception as e:
         return jsonify({"error": "Failed to process the query", "details": str(e)}), 500
+    
+@app.route("/get_safe_routes", methods=["POST"])
+def get_safe_routes():
+    data = request.json
+    start_location = data.get("start")
+    destination = data.get("destination")
+    
+    if not start_location or not destination:
+        return jsonify({"error": "Start and destination are required"}), 400
+    
+    # Step 1: Get routes from Google Directions API
+    directions_url = f"https://maps.googleapis.com/maps/api/directions/json?origin={start_location}&destination={destination}&alternatives=true&key={GOOGLE_MAPS_API_KEY}"
+    response = requests.get(directions_url)
+    directions_data = response.json()
+    
+    if "routes" not in directions_data or not directions_data["routes"]:
+        return jsonify({"error": "Could not fetch routes"}), 500
+    
+    safe_routes = []
+    
+    for route in directions_data["routes"]:
+        route_legs = route["legs"][0]  # Get first leg of route
+        polyline = route["overview_polyline"]["points"]  # Add polyline here
+        route_points = [(step["end_location"]["lat"], step["end_location"]["lng"]) for step in route_legs["steps"]]
+        
+    # Step 2: Compute safety score for the route
+        safety_score = compute_safety_score(route_points)
+        
+        # Step 3: Find emergency locations (police, hospitals) along the route
+        safe_places = find_safe_places(route_points)
+        
+        safe_routes.append({
+            "summary": route.get("summary", "Unknown"),
+            "distance": route_legs["distance"]["text"],
+            "duration": route_legs["duration"]["text"],
+            "safety_score": safety_score,
+            "safe_places": safe_places,
+            "polyline": polyline  # Include polyline here
+        })
+    
+    # Sort routes by highest safety score
+    safe_routes.sort(key=lambda r: r["safety_score"], reverse=True)
+    
+    return jsonify({"routes": safe_routes})
 
+def compute_safety_score(route_points):
+    """ Calculate safety score by averaging safety scores of districts along the route. """
+    scores = []
+    for lat, lng in route_points:
+        closest_district = crime_data.loc[((crime_data["Latitude"] - lat).abs() + (crime_data["Longitude"] - lng).abs()).idxmin()]
+        scores.append(closest_district["safety_score"])
+    return sum(scores) / len(scores) if scores else 50  # Default to 50 if no data
+
+def find_safe_places(route_points):
+    """ Find nearby police stations and hospitals along the route using Google Places API. """
+    safe_places = []
+    for lat, lng in route_points[::5]:  # Sample every 5th point to optimize API calls
+        places_url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lng}&radius=1000&type=police&key={GOOGLE_MAPS_API_KEY}"
+        response = requests.get(places_url).json()
+        safe_places.extend([(place["name"], place["geometry"]["location"]) for place in response.get("results", [])])
+    return safe_places
+   
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
