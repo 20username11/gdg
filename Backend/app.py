@@ -54,15 +54,31 @@ def get_safety_info(lat, lng):
     police_url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lng}&radius=3000&type=police&key={GOOGLE_MAPS_API_KEY}"
     police_response = requests.get(police_url).json()
     if "results" in police_response:
-        places.extend([f"🚔 Police - {place['name']} - {place['vicinity']}" for place in police_response["results"][:3]])
+
+        places.extend([{"type": "police",
+                "name": place["name"],
+                "vicinity": place["vicinity"],
+                "lat": place["geometry"]["location"]["lat"],
+                "lng": place["geometry"]["location"]["lng"]
+             } for place in police_response["results"][:3]])
+
+        #places.extend([f"🚔 Police - {place['name']} - {place['vicinity']}" for place in police_response["results"][:3]])
 
     # 🔹 Search for Hospitals
     hospital_url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lng}&radius=3000&type=hospital&key={GOOGLE_MAPS_API_KEY}"
     hospital_response = requests.get(hospital_url).json()
     if "results" in hospital_response:
-        places.extend([f"🏥 Hospital - {place['name']} - {place['vicinity']}" for place in hospital_response["results"][:3]])
+        
+        places.extend([{ "type": "hospital",
+                "name": place["name"],
+                "vicinity": place["vicinity"],
+                "lat": place["geometry"]["location"]["lat"],
+                "lng": place["geometry"]["location"]["lng"]} for place in hospital_response["results"][:3]])
 
-    return places if places else ["No emergency locations found."]
+        #places.extend([f"🏥 Hospital - {place['name']} - {place['vicinity']}" for place in hospital_response["results"][:3]])
+
+    return places if places else [{"type": "none", "name": "No emergency locations found", "vicinity": ""}]
+    #return places if places else ["No emergency locations found."]
 
 def get_crime_level(lat, lng):
     """ Analyze Google Places reviews of nearby police stations for crime reports """
@@ -103,42 +119,49 @@ def get_street_lighting_status(lat, lng):
     response = requests.get(url).json()
     return "well-lit" if response.get("status") == "OK" else "poorly-lit"
 
-def calculate_safety_score(num_safety_places, distance_to_road, crime_level, num_cctv, lighting_status):
-    """ Calculates a Safety Score (0-100) based on emergency places, distance from roads, crime data, CCTV, and lighting """
-    score = 0
+def calculate_safety_score(lat, lng):
+    """ Compute the refined safety score based on multiple factors """
+    
+    # Get safety-related data
+    distance = get_distance_from_main_road(lat, lng) or 1000  # Default to high distance
+    safety_info = get_safety_info(lat, lng)
+    crime_level = get_crime_level(lat, lng)
+    cctv_count = get_cctv_count(lat, lng)
+    street_lighting = get_street_lighting_status(lat, lng)
+    
+    # Define scoring weights
+    weights = {
+        "distance": 20,  # Closer to main road = riskier
+        "crime": 30,      # Higher crime reports = riskier
+        "cctv": 25,       # More CCTV = safer
+        "lighting": 25     # Well-lit streets = safer
+    }
+    
+    # Distance score (inverse relation)
+    distance_score = max(0, 20 - (distance / 50))  # Reducing score if too close
+    
+    # Crime level score
+    crime_scores = {"low": 30, "moderate": 15, "high": 0}
+    crime_score = crime_scores.get(crime_level, 15)  # Default to moderate
+    
+    # CCTV score (more cameras = safer)
+    cctv_score = min(25, cctv_count * 5)  # 5 points per camera, max 25
+    
+    # Street lighting score
+    lighting_score = 25 if street_lighting == "well-lit" else 10
+    
+    # Final score calculation
+    total_score = distance_score + crime_score + cctv_score + lighting_score
+    total_score = max(0, min(100, total_score))  # Clamp to 0-100
+    
+    return total_score
 
-    if num_safety_places >= 3:
-        score += 40
-    elif num_safety_places >= 1:
-        score += 20
-
-    if distance_to_road is not None:
-        if distance_to_road < 50:
-            score += 40
-        elif distance_to_road < 200:
-            score += 20
-
-    if crime_level == "high":
-        score -= 40
-    elif crime_level == "moderate":
-        score -= 20
-
-    if num_cctv >= 5:
-        score += 20
-    elif num_cctv >= 1:
-        score += 10
-
-    if lighting_status == "well-lit":
-        score += 20
-
-    return max(0, min(score, 100))
 
 @app.route("/check_safety", methods=["POST"])
 def check_safety():
-    """ User enters a location, and we return real-time safety data. """
+    """ Return safety data with AI-generated safety score & locations. """
     data = request.json
     address = data.get("location", "").strip()
-
     if not address:
         return jsonify({"error": "Please provide a valid location"}), 400
 
@@ -147,24 +170,61 @@ def check_safety():
         return jsonify({"error": "Could not find the location. Try again."}), 404
 
     user_lat, user_lng = location
-    distance_to_road = get_distance_from_main_road(user_lat, user_lng)
     safety_info = get_safety_info(user_lat, user_lng)
-
+    distance = get_distance_from_main_road(user_lat, user_lng)
     crime_level = get_crime_level(user_lat, user_lng)
-    num_cctv = get_cctv_count(user_lat, user_lng)
-    lighting_status = get_street_lighting_status(user_lat, user_lng)
+    cctv_count = get_cctv_count(user_lat, user_lng)
+    street_lighting = get_street_lighting_status(user_lat, user_lng)
+    safety_score = calculate_safety_score(user_lat, user_lng)
+    print("DEBUG: safety_info =", safety_info)  # Add this line
+    
+    if isinstance(safety_info, str):
+        try:
+            safety_info = json.loads(safety_info)  # Convert string to JSON
+        except json.JSONDecodeError:
+            return "Error: Invalid JSON format", 500  # Handle incorrect format
 
-    safety_score = calculate_safety_score(len(safety_info), distance_to_road, crime_level, num_cctv, lighting_status)
+    safety_locations = ', '.join([place['name'] for place in safety_info])
+ # 🔹 Generate AI response
+    model = genai.GenerativeModel("gemini-1.5-pro")
+    prompt = f"""
+    Ellaborate the safety of {address} based on these details:
+    - Distance from main road: {distance} meters
+    - Number of nearby emergency locations: {len(safety_info)} (police + hospitals)
+    - Emergency locations list:
+    {safety_locations}
+    - Crime level: {crime_level}
+    - Number of CCTVs: {cctv_count}
+    - Street lighting: {street_lighting}
+    - Computed safety score: {safety_score}
 
+    🔹 **Return the result in strict JSON format:**
+    {{
+      "response": "A natural language summary of safety",
+      "safety_score": {safety_score}
+    }}
+    """
+    
+    try:
+        ai_response = model.generate_content(prompt).text
+        ai_data = json.loads(ai_response)  # Convert Gemini's response to JSON
+    except json.JSONDecodeError:
+        print("⚠️ Gemini response is not valid JSON, using fallback...")
+        ai_data = {"response": ai_response, "safety_score": safety_score}  
+    
     return jsonify({
         "location": address,
-        "distance_from_main_road": f"{distance_to_road} meters",
-        "safety_info": safety_info,
+        "lat": user_lat,
+        "lng": user_lng,
+        "distance_from_main_road": f"{distance} meters" if distance is not None else "N/A",
         "crime_level": crime_level,
-        "cctv_count": num_cctv,
-        "street_lighting": lighting_status,
-        "safety_score": f"{safety_score}/100"
+        "cctv_count": cctv_count,
+        "street_lighting": street_lighting,
+        "ai_response": ai_data["response"],  # Natural language response
+        "safety_score": ai_data["safety_score"],  # AI-generated safety score
+        "safety_locations": safety_info  # Emergency locations with coordinates
     })
+
 @app.route("/chatbot", methods=["POST"])
 def chatbot():
     """ Process user safety queries, extract location details, fetch data, and respond naturally using Gemini AI. """
