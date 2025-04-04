@@ -9,7 +9,7 @@ import pandas as pd  # For handling CSV data
 app = Flask(__name__)
 
 CORS(app)
-CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+CORS(app, resources={r"/*": {"origins": "http://localhost:5174"}})
 # 🔹 Replace with your actual Google Maps API Key
 GOOGLE_MAPS_API_KEY = "AIzaSyAohWXg1BFJZYRt2i1FNimNv881qoSx4dM"
 GEMINI_API_KEY = "AIzaSyAohWXg1BFJZYRt2i1FNimNv881qoSx4dM"
