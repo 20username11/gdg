@@ -99,6 +99,9 @@ const MapComponent = () => {
           mapContainerStyle={containerStyle}
           center={mapCenter}
           zoom={12}
+          options={{
+            mapTypeControl: false, // Disable Map and Satellite view
+          }}
         >
           {/* Marker for the searched location */}
           <Marker position={mapCenter} />
@@ -119,21 +122,19 @@ const MapComponent = () => {
           )}
 
           {/* Markers for nearby emergency locations */}
-          {/* Markers for nearby emergency locations */}
           {safetyData?.safety_locations?.map((location, index) => {
-            // Determine the icon based on the location type
             const icon =
               location.type === "hospital"
-                ? hospitalMarker // Use your local hospital icon
+                ? hospitalMarker
                 : location.type === "police"
-                ? "https://maps.google.com/mapfiles/ms/icons/police.png" // Police station icon
-                : "https://maps.google.com/mapfiles/ms/icons/red-dot.png"; // Default icon
+                ? "https://maps.google.com/mapfiles/ms/icons/police.png"
+                : "https://maps.google.com/mapfiles/ms/icons/red-dot.png";
 
             return (
               <Marker
                 key={index}
                 position={{ lat: location.lat, lng: location.lng }}
-                icon={icon} // Use the custom icon
+                icon={icon}
                 onClick={() =>
                   setSelectedPlace({
                     type: location.type,
@@ -181,7 +182,11 @@ const MapComponent = () => {
             <strong>Street Lighting:</strong> {safetyData.street_lighting}
           </p>
           <p>
-            <strong>Summary:</strong> {safetyData.ai_response.replace(/```json\n|\n ```| "response"/g, "")}
+            <strong>Summary:</strong>{" "}
+            {safetyData.ai_response.replace(
+              /```json\n|\n ```| "response"/g,
+              ""
+            )}
           </p>
           <p>
             <strong>Safety Score:</strong> {safetyData.safety_score}

@@ -87,8 +87,8 @@ const FindRoute = () => {
   return (
     <div>
       {/* Input fields for "From" and "To" locations */}
-      <div className="absolute top-4 left-4 z-10 bg-white p-4 rounded-lg shadow-lg">
-        <h2 className="text-lg font-bold mb-2">Find Route</h2>
+      <div className="absolute top-[15vh] left-4 z-10 bg-white p-4 rounded-lg shadow-xl">
+        <h2 className="flex justify-center  text-lg font-bold mb-2">Find Route</h2>
         <Autocomplete
           onLoad={(autocomplete) => setFromAutocomplete(autocomplete)}
           onPlaceChanged={handleFromPlaceChanged}

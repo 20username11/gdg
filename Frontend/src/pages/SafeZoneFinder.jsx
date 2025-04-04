@@ -4,7 +4,7 @@ import SideBar from '../components/Map/SideBar'
 
 const SafeZoneFinder = () => {
   return (
-    <div>
+    <div className='max-h-screen max-w-screen overflow-hidden'>
       <Map />
       <SideBar />
     </div>
