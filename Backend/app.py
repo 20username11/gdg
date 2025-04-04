@@ -15,7 +15,7 @@ GOOGLE_MAPS_API_KEY = "AIzaSyAohWXg1BFJZYRt2i1FNimNv881qoSx4dM"
 GEMINI_API_KEY = "AIzaSyAohWXg1BFJZYRt2i1FNimNv881qoSx4dM"
 genai.configure(api_key=GEMINI_API_KEY)
 # Load crime dataset
-crime_data = pd.read_csv("crime_data.csv")
+crime_data = pd.read_csv("./crime_data.csv")
 
 
 @app.route("/")
@@ -275,6 +275,7 @@ def chatbot():
     
 @app.route("/get_safe_routes", methods=["POST"])
 def get_safe_routes():
+    print("DEBUG: get_safe_routes called")
     data = request.json
     start_location = data.get("start")
     destination = data.get("destination")

@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/navbar/Navbar';
 import Home from './pages/Home';
 import SafeZoneFinder from './pages/SafeZoneFinder';
+import FindRoute from './pages/FindRoute';
 // Import other pages as needed
 // import About from './pages/About';
 import './App.css';
@@ -14,6 +15,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/safeZone" element={<SafeZoneFinder />} />
+        <Route path='/findRoute' element={<FindRoute />} />
         {/* Add more routes as needed */}
       </Routes>
     </Router>
