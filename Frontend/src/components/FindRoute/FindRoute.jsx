@@ -38,7 +38,7 @@ const FindRoute = () => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.BACKEND_URL}/get_safe_routes`,
+        `${import.meta.env.VITE_BACKEND_URL}/get_safe_routes`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
