@@ -26,7 +26,6 @@ const ChatBot = () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: input }),
-                mode: "no-cors",
             });
 
             if (!response.ok) throw new Error('Network response was not ok');
