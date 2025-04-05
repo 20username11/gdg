@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   GoogleMap,
   Polyline,
@@ -6,6 +6,7 @@ import {
   Autocomplete,
   useJsApiLoader,
 } from "@react-google-maps/api";
+import Loader from "../common/Loader";
 
 const containerStyle = {
   width: "100%",
@@ -23,6 +24,8 @@ const FindRoute = () => {
   const [to, setTo] = useState(""); // State for "To" location
   const [fromAutocomplete, setFromAutocomplete] = useState(null); // Autocomplete instance for "From"
   const [toAutocomplete, setToAutocomplete] = useState(null); // Autocomplete instance for "To"
+  const [loading, setLoading] = useState(false); // Loading state
+  const mapRef = useRef(null); // Reference to the Google Map instance
 
   // Use useJsApiLoader to load the Google Maps API
   const { isLoaded } = useJsApiLoader({
@@ -35,6 +38,8 @@ const FindRoute = () => {
       alert("Please enter both 'From' and 'To' locations.");
       return;
     }
+
+    setLoading(true); // Start loading
 
     try {
       const response = await fetch(
@@ -50,14 +55,26 @@ const FindRoute = () => {
         const errorData = await response.json();
         console.error("Error:", errorData);
         alert(`Error: ${errorData.error}`);
+        setLoading(false); // Stop loading
         return;
       }
 
       const data = await response.json();
       console.log("Routes:", data.routes); // Debugging: Log the routes
       setRoutes(data.routes); // Update the routes state with the response
+
+      // Move the map to the "From" location
+      if (mapRef.current && fromAutocomplete) {
+        const place = fromAutocomplete.getPlace();
+        if (place && place.geometry) {
+          const { lat, lng } = place.geometry.location;
+          mapRef.current.panTo({ lat: lat(), lng: lng() });
+        }
+      }
     } catch (error) {
       console.error("Error fetching routes:", error);
+    } finally {
+      setLoading(false); // Stop loading
     }
   };
 
@@ -87,7 +104,7 @@ const FindRoute = () => {
     <div>
       {/* Input fields for "From" and "To" locations */}
       <div className="absolute top-[15vh] left-4 z-10 bg-white p-4 rounded-lg shadow-xl">
-        <h2 className="flex justify-center  text-lg font-bold mb-2">Find Route</h2>
+        <h2 className="flex justify-center text-lg font-bold mb-2">Find Route</h2>
         <Autocomplete
           onLoad={(autocomplete) => setFromAutocomplete(autocomplete)}
           onPlaceChanged={handleFromPlaceChanged}
@@ -121,7 +138,19 @@ const FindRoute = () => {
       </div>
 
       {/* Google Map */}
-      <GoogleMap mapContainerStyle={containerStyle} center={center} zoom={8}>
+      <GoogleMap
+        mapContainerStyle={containerStyle}
+        center={center}
+        zoom={8}
+        onLoad={(map) => (mapRef.current = map)} // Save the map instance
+      >
+        {/* Show loading overlay */}
+        {loading && (
+          <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-white z-50">
+                    <Loader />
+          </div>
+        )}
+
         {/* Render routes */}
         {routes?.map((route, index) => {
           // Assign colors based on the index of the route
