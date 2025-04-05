@@ -5,17 +5,20 @@ import geopy.distance  # Library to calculate distances
 from flask_cors import CORS
 import json  # For debugging API responses
 import pandas as pd  # For handling CSV data
+from dotenv import load_dotenv
+import os
 
 app = Flask(__name__)
 
+load_dotenv()
 CORS(app)
 CORS(app, resources={r"/*": {"origins": "http://localhost:5174"}})
-# 🔹 Replace with your actual Google Maps API Key
-GOOGLE_MAPS_API_KEY = "AIzaSyAohWXg1BFJZYRt2i1FNimNv881qoSx4dM"
-GEMINI_API_KEY = "AIzaSyAohWXg1BFJZYRt2i1FNimNv881qoSx4dM"
+GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=GEMINI_API_KEY)
+
 # Load crime dataset
-crime_data = pd.read_csv("./crime_data.csv")
+crime_data = pd.read_csv("crime_data.csv")
 
 
 @app.route("/")

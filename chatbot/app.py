@@ -62,7 +62,7 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 # Correct CORS configuration (single declaration)
-CORS(app, resources={r"/chat": {"origins": "http://localhost:5174"}})  # Match React's port
+CORS(app, resources={r"/chat": {"origins": "http://localhost:5173"}})  # Match React's port
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
