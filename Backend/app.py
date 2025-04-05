@@ -11,10 +11,10 @@ import os
 app = Flask(__name__)
 
 load_dotenv()
-port = os.getenv("PORT", 5000)  # Default to 5000 if not set in .env
+frontend_url = os.getenv("FRONTEND_URL")  # Default to 5000 if not set in .env
 CORS(app)
 
-CORS(app, resources={r"/*": {"origins": f"http://localhost:{port}"}})
+CORS(app, resources={r"/*": {"origins": frontend_url}})
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=GEMINI_API_KEY)
@@ -341,4 +341,5 @@ def find_safe_places(route_points):
     return safe_places
    
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    port = int(os.getenv("PORT", 5000))  # Default to 5000 if PORT is not set
+    app.run(host="0.0.0.0", port=port)

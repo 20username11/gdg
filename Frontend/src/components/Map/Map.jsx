@@ -34,6 +34,7 @@ const MapComponent = () => {
   const onPlaceChanged = async () => {
     if (autocomplete !== null) {
       const place = autocomplete.getPlace();
+      console.log(place);
       if (place.geometry) {
         const lat = place.geometry.location.lat();
         const lng = place.geometry.location.lng();
@@ -42,7 +43,7 @@ const MapComponent = () => {
         setLoading(true); // Start loading
         try {
           // Fetch safety data from the backend
-          const response = await fetch("http://localhost:5000/check_safety", {
+          const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/check_safety`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ location: place.formatted_address }),

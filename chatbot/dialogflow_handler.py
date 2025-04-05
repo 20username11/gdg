@@ -7,12 +7,10 @@ def get_dialogflow_response(user_input):
     """Fetches response from Google Dialogflow for user queries."""
     try:
         # Load credentials from the service account file
-        credentials = service_account.Credentials.from_service_account_file(
-            "C:/Users/choll/OneDrive/Desktop/chatb/Women_CB/safe-housing-454603-4dbf3a362e54.json"
-        )
+        credentials_json = config.GOOGLE_APPLICATION_CREDENTIALS_JSON
 
         # Create the Dialogflow client with authentication
-        client = dialogflow.SessionsClient(credentials=credentials)
+        client = dialogflow.SessionsClient(credentials=credentials_json)
         session = client.session_path(config.GOOGLE_PROJECT_ID, config.SESSION_ID)
 
         text_input = dialogflow.TextInput(text=user_input, language_code="en")
