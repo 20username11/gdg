@@ -2,3 +2,4 @@ Flask
 google-cloud-dialogflow
 requests
 python-dotenv
+flask-cors
