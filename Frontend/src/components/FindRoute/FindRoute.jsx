@@ -143,11 +143,10 @@ const FindRoute = () => {
               />
 
               {/* Render markers for safe places */}
-              {route.safe_places.map(([name, location], idx) => (
+              {route.safe_places.map(([, location], idx) => (
                 <Marker
                   key={idx}
                   position={location}
-                  label={name}
                   icon="https://maps.google.com/mapfiles/ms/icons/police.png"
                 />
               ))}
