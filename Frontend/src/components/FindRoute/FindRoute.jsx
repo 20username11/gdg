@@ -6,7 +6,6 @@ import {
   Autocomplete,
   useJsApiLoader,
 } from "@react-google-maps/api";
-import { getRouteColor } from "./getRouteColor"; // Import the utility function for route color
 
 const containerStyle = {
   width: "100%",
