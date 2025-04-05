@@ -6,7 +6,7 @@ const SafeZoneFinder = () => {
   return (
     <div className='max-h-screen max-w-screen overflow-hidden'>
       <Map />
-      <SideBar />
+      {/* <SideBar /> */}
     </div>
   )
 }
