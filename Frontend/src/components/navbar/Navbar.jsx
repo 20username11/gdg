@@ -127,7 +127,7 @@ function ResponsiveAppBar({ pages, settings }) {
                 onClick={handleCloseNavMenu}
                 sx={{ 
                   my: 2, 
-                  color: 'grey', 
+                  color: 'white', 
                   display: 'block',
                   fontFamily: 'Poppins, sans-serif' 
                 }}
@@ -166,7 +166,7 @@ function ResponsiveAppBar({ pages, settings }) {
                   component={Link}
                   to={setting.url}
                 >
-                  <Typography textAlign="center">
+                  <Typography textAlign="center" sx={{ color: 'white' }}>
                     {setting.label}
                   </Typography>
                 </MenuItem>
