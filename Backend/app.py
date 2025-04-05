@@ -11,8 +11,10 @@ import os
 app = Flask(__name__)
 
 load_dotenv()
+port = os.getenv("PORT", 5000)  # Default to 5000 if not set in .env
 CORS(app)
-CORS(app, resources={r"/*": {"origins": "http://localhost:5174"}})
+
+CORS(app, resources={r"/*": {"origins": f"http://localhost:{port}"}})
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=GEMINI_API_KEY)
