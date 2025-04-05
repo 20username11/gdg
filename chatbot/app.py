@@ -8,6 +8,7 @@ import os
 load_dotenv()
 app = Flask(__name__)
 frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173") 
+
 CORS(app)   
 CORS(app, resources={r"/chat": {"origins": frontend_url}})  # Match React's port
 

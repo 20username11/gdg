@@ -25,7 +25,8 @@ const ChatBot = () => {
             const response = await fetch(`${import.meta.env.VITE_CHATBOT_URL}/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: input })
+                body: JSON.stringify({ message: input }),
+                mode: "no-cors",
             });
 
             if (!response.ok) throw new Error('Network response was not ok');
