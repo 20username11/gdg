@@ -1,8 +1,11 @@
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "safe-housing-454603-4dbf3a362e54.json"
-GOOGLE_PROJECT_ID = "safe-housing-454603"
-SESSION_ID = "12345"
-MODEL_NAME = "models/models/gemini-1.5-pro-002"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
-GEMINI_API_KEY = "AIzaSyAAAZnV5ietqaRmunTEFuuHbmyFhcUaUMY"
+GOOGLE_PROJECT_ID = os.getenv("GOOGLE_PROJECT_ID")
+SESSION_ID = os.getenv("SESSION_ID")
+MODEL_NAME = os.getenv("MODEL_NAME")
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
