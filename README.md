@@ -34,11 +34,7 @@ The **Safety Check API** is designed to enhance user safety by providing critica
     ```
 3. Access the API at `http://localhost:5000`.
 
-## Contributing
-We welcome contributions! Please fork the repository and submit a pull request.
 
-## License
-This project is licensed under the [MIT License](LICENSE).
 
 ---
 Empowering safety with technology!
