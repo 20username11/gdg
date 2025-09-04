@@ -1,4 +1,4 @@
-# Find Her
+# Guide Her
 
 ## Project Summary: Empowering Women with Safety and Support
 
